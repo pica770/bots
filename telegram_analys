@@ -1,0 +1,67 @@
+import telebot
+import requests
+import json
+import requests
+import json
+
+
+token = "5599359324:AAEfmCCUutBzcrs3SbTM5HqC0a1RLZ7UenM"
+bot = telebot.TeleBot(token)
+
+print(bot.get_me())
+
+@bot.message_handler(commands=["start"])
+def welcome(message):
+    bot.send_message(message.chat.id, "Добро пожаловать!")
+
+@bot.message_handler(content_types=['document'])
+def handle_docs_photo(message):
+    chat_id = message.chat.id
+
+    url = "https://www.virustotal.com/api/v3/files"
+
+    files = bot.get_file(message.document.file_id)
+    downloaded_file = bot.download_file(files.file_path)
+
+    src = 'C:/Users/Mor1arty/PycharmProjects/maps/' + message.document.file_name
+    with open(src, 'wb') as new_file:
+        new_file.write(downloaded_file)
+
+    headers = {
+        "Accept": "application/json",
+        "x-apikey": "c568f415d81d0775003bd26914ecbda9fbe2f11807283872a9de13b2960f1e18"
+    }
+
+    files = {"file": open(message.document.file_name, "rb")}
+
+    response = requests.post(url, files=files, headers=headers)
+
+    str_json = response.text
+
+    data = eval(str_json)
+    data = data["data"]["id"]
+
+    print(data)
+
+    url = "https://www.virustotal.com/api/v3/analyses/" + str(data)
+
+    print(url)
+
+    headers = {
+        "Accept": "application/json",
+        "x-apikey": "c568f415d81d0775003bd26914ecbda9fbe2f11807283872a9de13b2960f1e18"
+    }
+
+    response = requests.get(url, headers=headers)
+
+    print(response.text)
+
+    str_json = response.text
+    res = ''
+    for i in range(len(str_json.split())):
+        if str_json.split()[i] == '"category":':
+            res = str_json.split()[i - 2] + ' ' + str_json.split()[i + 1]
+            bot.send_message('592451719', res)
+
+#Run
+bot.polling(none_stop=True)
